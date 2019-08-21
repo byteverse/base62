@@ -1,0 +1,37 @@
+cabal-version: 2.2
+name: base62
+version: 0.1.0.0
+synopsis: Base62 encoding and decoding
+-- description:
+homepage: https://github.com/andrewthad/base62
+bug-reports: https://github.com/andrewthad/base62/issues
+license: BSD-3-Clause
+license-file: LICENSE
+author: Andrew Martin
+maintainer: andrew.thaddeus@gmail.com
+copyright: 2019 Andrew Martin
+category: Data
+extra-source-files: CHANGELOG.md
+
+library
+  exposed-modules: Data.Word.Base62
+  build-depends:
+    , base >=4.12 && <5
+    , small-bytearray-builder
+    , primitive >=0.7 && <0.8
+    , byteslice >=0.1.2 && <0.2
+    , wide-word >=0.1.0.8 && <0.2
+  hs-source-dirs: src
+  default-language: Haskell2010
+
+test-suite test
+  default-language: Haskell2010
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+    , base >=4.12.0.0 && <5
+    , base62
+    , tasty
+    , tasty-quickcheck
+    , byteslice
