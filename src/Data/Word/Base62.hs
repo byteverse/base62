@@ -19,7 +19,7 @@ module Data.Word.Base62
   , decode128
   ) where
 
-import Data.ByteArray.Builder.Small.Unsafe (Builder(..),run)
+import Data.ByteArray.Builder.Bounded.Unsafe (Builder(..))
 import Data.Bytes.Types (Bytes(Bytes))
 import Data.Char (ord)
 import Data.Primitive (ByteArray(..),readByteArray,writeByteArray)
@@ -31,8 +31,9 @@ import GHC.Exts (isTrue#,(>#))
 import GHC.ST (ST(ST))
 import GHC.Word (Word64(W64#),Word8(W8#),Word(W#))
 
+import qualified Arithmetic.Nat as Nat
 import qualified Data.Bytes as Bytes
-import qualified Data.ByteArray.Builder.Small.Unsafe as Builder
+import qualified Data.ByteArray.Builder.Bounded as Builder
 
 -- | Base62 encode a 64-bit word. Leading zero bits are suppressed.
 -- For example:
@@ -43,14 +44,14 @@ import qualified Data.ByteArray.Builder.Small.Unsafe as Builder
 -- Note that this will encode the number 0 as the character 0 rather
 -- than as the empty byte array.
 encode64_ :: Word64 -> ByteArray
-encode64_ = run . builder64_
+encode64_ = Builder.run Nat.constant . builder64_
 
 builder64_ :: Word64 -> Builder 11
 {-# inline builder64_ #-}
 builder64_ (W64# w) = builder64_# w
 
 encode128_ :: Word128 -> ByteArray
-encode128_ = run . builder128_
+encode128_ = Builder.run Nat.constant . builder128_
 
 builder128_ :: Word128 -> Builder 22
 {-# inline builder128_ #-}
