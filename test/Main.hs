@@ -2,11 +2,14 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TypeApplications #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 import Control.Applicative (liftA2)
 import Data.Primitive (ByteArray)
 import Data.Bits ((.&.))
 import Data.Char (chr)
 import Test.Tasty (TestTree,defaultMain,testGroup)
+import Test.Tasty.HUnit (testCase,(@=?))
 import Test.Tasty.QuickCheck (testProperty,(===),choose)
 import Test.Tasty.QuickCheck (Arbitrary,arbitrary,counterexample)
 import Data.WideWord.Word128 (Word128(Word128))
@@ -22,14 +25,22 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "base62"
   [ testGroup "Word64"
-    [ testProperty "encode_" $ \w ->
-        Just w === W.decode64 (Bytes.fromByteArray (W.encode64_ w))
+    [ testProperty "isomorphic" $ \w ->
+        Just w === W.decode64 (Bytes.fromByteArray (W.encode64 w))
+    , testCase "A" $
+        Nothing
+        @=?
+        W.decode64 (Bytes.fromAsciiString "1IdHllabYuAOlNK4")
     ]
   , testGroup "Word128"
-    [ testProperty "encode_" $ \w ->
-        let enc = W.encode128_ w in
+    [ testProperty "isomorphic" $ \w ->
+        let enc = W.encode128 w in
         counterexample ("Encoded as: " ++ show enc ++ "\nRendered as: " ++ str enc)
           $ Just w === W.decode128 (Bytes.fromByteArray enc)
+    , testCase "A" $
+        Nothing
+        @=?
+        W.decode128 (Bytes.fromAsciiString "7n42DGM5Tflk9n8mt7Fhc9")
     ]
   ]
 

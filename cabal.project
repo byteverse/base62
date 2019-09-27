@@ -1,0 +1,9 @@
+packages: .
+
+source-repository-package
+  type: git
+  location: https://github.com/andrewthad/byteslice
+  tag: 97b3e38cd418be02548c52c740e7592179cce4e1
+
+package base62
+  ghc-options: -Wall -Werror
