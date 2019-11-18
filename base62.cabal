@@ -19,7 +19,7 @@ library
     Data.Word.Base62
   build-depends:
     , base >=4.12 && <5
-    , byteslice >=0.1.2 && <0.2
+    , byteslice >=0.1.2 && <0.3
     , natural-arithmetic >=0.1 && <0.2
     , primitive >=0.7 && <0.8
     , small-bytearray-builder >=0.2 && <0.4
