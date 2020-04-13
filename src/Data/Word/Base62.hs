@@ -27,7 +27,7 @@ module Data.Word.Base62
   , decode128
   ) where
 
-import Data.ByteArray.Builder.Bounded.Unsafe (Builder(..))
+import Data.Bytes.Builder.Bounded.Unsafe (Builder(..))
 import Data.Bytes.Types (Bytes(Bytes))
 import Data.Char (ord)
 import Data.Primitive (ByteArray(..),readByteArray,writeByteArray)
@@ -41,7 +41,7 @@ import GHC.Word (Word64(W64#),Word8(W8#),Word(W#))
 
 import qualified Arithmetic.Nat as Nat
 import qualified Data.Bytes as Bytes
-import qualified Data.ByteArray.Builder.Bounded as Builder
+import qualified Data.Bytes.Builder.Bounded as Builder
 import qualified GHC.Exts as Exts
 
 -- $setup
