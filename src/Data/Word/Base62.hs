@@ -3,6 +3,7 @@
 {-# language GADTSyntax #-}
 {-# language LambdaCase #-}
 {-# language MagicHash #-}
+{-# language PatternSynonyms #-}
 {-# language RankNTypes #-}
 {-# language ScopedTypeVariables #-}
 {-# language TypeApplications #-}
@@ -34,10 +35,12 @@ import Data.Primitive (ByteArray(..),readByteArray,writeByteArray)
 import Data.Primitive (MutableByteArray(MutableByteArray))
 import Data.WideWord.Word128 (Word128(Word128))
 import GHC.Exts (Char(C#),quotRemWord#,indexCharArray#)
-import GHC.Exts (ByteArray#,Int#,Int(I#),Word#,(+#),(-#),writeWord8Array#)
+import GHC.Exts (ByteArray#,Int#,Int(I#),Word#,(+#),(-#))
 import GHC.Exts (isTrue#,(>#))
+import GHC.Prim.Compat (writeWord8Array#)
 import GHC.ST (ST(ST))
-import GHC.Word (Word64(W64#),Word8(W8#),Word(W#))
+import GHC.Word (Word64(W64#),Word8,Word(W#))
+import GHC.Word.Compat (pattern W8#)
 
 import qualified Arithmetic.Nat as Nat
 import qualified Data.Bytes as Bytes
