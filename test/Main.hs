@@ -16,6 +16,7 @@ import Data.WideWord.Word128 (Word128(Word128))
 
 import qualified Test.Tasty.QuickCheck
 import qualified Data.Bytes as Bytes
+import qualified Data.Bytes.Text.Ascii as Ascii
 import qualified Data.Word.Base62 as W
 import qualified GHC.Exts as Exts
 
@@ -30,7 +31,7 @@ tests = testGroup "base62"
     , testCase "A" $
         Nothing
         @=?
-        W.decode64 (Bytes.fromAsciiString "1IdHllabYuAOlNK4")
+        W.decode64 (Ascii.fromString "1IdHllabYuAOlNK4")
     ]
   , testGroup "Word128"
     [ testProperty "isomorphic" $ \w ->
@@ -40,7 +41,7 @@ tests = testGroup "base62"
     , testCase "A" $
         Nothing
         @=?
-        W.decode128 (Bytes.fromAsciiString "7n42DGM5Tflk9n8mt7Fhc9")
+        W.decode128 (Ascii.fromString "7n42DGM5Tflk9n8mt7Fhc9")
     ]
   ]
 
