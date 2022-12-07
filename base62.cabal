@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name: base62
-version: 0.1.0.1
+version: 0.1.0.2
 synopsis: Base62 encoding and decoding
 description:
   Encode and decode using the base62 encoding scheme.

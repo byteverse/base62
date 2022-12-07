@@ -1,5 +1,9 @@
 # Revision history for base62
 
+## 0.1.0.2 -- 2022-12-07
+
+* Support GHC 9.2.
+
 ## 0.1.0.1 -- 2020-12-18
 
 * Switch from small-bytearray-builder to bytebuild
