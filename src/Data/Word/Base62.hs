@@ -34,13 +34,12 @@ import Data.Char (ord)
 import Data.Primitive (ByteArray(..),readByteArray,writeByteArray)
 import Data.Primitive (MutableByteArray(MutableByteArray))
 import Data.WideWord.Word128 (Word128(Word128))
-import GHC.Exts (Char(C#),quotRemWord#,indexCharArray#)
-import GHC.Exts (ByteArray#,Int#,Int(I#),Word#,(+#),(-#))
+import GHC.Exts (Char(C#),Word64#,Word8#,quotRemWord#,indexCharArray#)
+import GHC.Exts (ByteArray#,Int#,Int(I#),(+#),(-#))
 import GHC.Exts (isTrue#,(>#))
-import GHC.Prim.Compat (writeWord8Array#)
+import GHC.Exts (wordToWord64#,word64ToWord#)
 import GHC.ST (ST(ST))
-import GHC.Word (Word64(W64#),Word8,Word(W#))
-import GHC.Word.Compat (pattern W8#)
+import GHC.Word (Word64(W64#),Word8(W8#))
 
 import qualified Arithmetic.Nat as Nat
 import qualified Data.Bytes as Bytes
@@ -79,41 +78,45 @@ builder128 :: Word128 -> Builder 22
 {-# inline builder128 #-}
 builder128 (Word128 (W64# a) (W64# b)) = builder128# a b
 
-builder64# :: Word# -> Builder 11
+builder64# :: Word64# -> Builder 11
 {-# noinline builder64# #-}
 builder64# w0 = Builder
-  (\marr off0 s0 -> case w0 of
-    0## -> case writeWord8Array# marr off0 48## s0 of
+  (\marr off0 s0 -> case word64ToWord# w0 of
+    0## -> case Exts.writeWord8Array# marr off0 (Exts.wordToWord8# 48##) s0 of
       s1 -> (# s1, off0 +# 1# #)
-    _ -> let go ix w s1 = case w of
+    _ -> let go ix w s1 = case word64ToWord# w of
                0## -> case reverseBytes (MutableByteArray marr) (I# off0) (I# (ix -# 1# )) of
                  ST f -> case f s1 of
                    (# s2, (_ :: ()) #) -> (# s2, ix #)
                _ ->
-                 let !(# q, r #) = quotRemWord# w 62##
-                  in case writeWord8Array# marr ix (unW8 (encodeByte (W# r))) s1 of
+                 let !(# q0, r0 #) = quotRemWord# (word64ToWord# w) 62##
+                     !q = wordToWord64# q0
+                     !r = wordToWord64# r0
+                  in case Exts.writeWord8Array# marr ix (unW8 (encodeByte (W64# r))) s1 of
                        s2 -> go (ix +# 1#) q s2
           in go off0 w0 s0
   )
 
 -- Always outputs exactly ten digits. They do not need to be reversed.
-builder62pow10# :: Word# -> Builder 10
+builder62pow10# :: Word64# -> Builder 10
 {-# noinline builder62pow10# #-}
 builder62pow10# w0 = Builder
   (\marr off0 s0 -> 
     let go ix d w s1 = case d of
           0# -> (# s1, ix +# 11# #) 
           _ ->
-            let !(# q, r #) = quotRemWord# w 62##
-             in case writeWord8Array# marr ix (unW8 (encodeByte (W# r))) s1 of
+            let !(# q0, r0 #) = quotRemWord# (word64ToWord# w) 62##
+                !q = wordToWord64# q0
+                !r = wordToWord64# r0
+             in case Exts.writeWord8Array# marr ix (unW8 (encodeByte (W64# r))) s1 of
                   s2 -> go (ix -# 1# ) (d -# 1# ) q s2
      in go (off0 +# 9# ) 10# w0 s0
   )
 
-builder128# :: Word# -> Word# -> Builder 22
+builder128# :: Word64# -> Word64# -> Builder 22
 {-# noinline builder128# #-}
 builder128# wa wb = Builder
-  (\marr off0 s0 -> case wa of
+  (\marr off0 s0 -> case word64ToWord# wa of
     0## -> case builder64# wb of Builder f -> f marr off0 s0
     _ -> case quotRem (Word128 (W64# wa) (W64# wb)) (Word128 0 n62pow10) of
       (upper@(Word128 upperHi (W64# upperLo)), (Word128 shouldBeZeroA (W64# lower))) -> case shouldBeZeroA of
@@ -123,9 +126,9 @@ builder128# wa wb = Builder
             (Word128 shouldBeZeroB (W64# x),Word128 shouldBeZeroC (W64# y)) -> case shouldBeZeroB of
               0 -> case shouldBeZeroC of
                 0 -> case builder64# x `Builder.append` (builder62pow10# y `Builder.append` builder62pow10# lower) of Builder f -> f marr off0 s0
-                _ -> error "Data.Word.Base62: logical error c"
-              _ -> error "Data.Word.Base62: logical error b"
-        _ -> error "Data.Word.Base62: logical error a"
+                _ -> errorWithoutStackTrace "Data.Word.Base62: logical error c"
+              _ -> errorWithoutStackTrace "Data.Word.Base62: logical error b"
+        _ -> errorWithoutStackTrace "Data.Word.Base62: logical error a"
   )
 
 -- Reverse the bytes in the designated slice. This takes
@@ -143,7 +146,7 @@ reverseBytes arr begin end = go begin end where
     else pure ()
 
 -- Precondition: argument is less than 62.
-encodeByte :: Word -> Word8
+encodeByte :: Word64 -> Word8
 encodeByte w
   | w < 10 = unsafeW8 (c2w '0' + w)
   | w < 36 = unsafeW8 ((c2w 'A' - 10) + w)
@@ -151,25 +154,22 @@ encodeByte w
 
 -- We use Char here since it produces more readable Core.
 -- Performance is not impacted in any way.
-decodeByte :: Char -> Maybe Word
+decodeByte :: Char -> Maybe Word64
 decodeByte w
   | w >= '0' && w <= '9' = Just (c2w w - c2w '0')
   | w >= 'A' && w <= 'Z' = Just (c2w w - (c2w 'A' - 10))
   | w >= 'a' && w <= 'z' = Just (c2w w - (c2w 'a' - 36))
   | otherwise = Nothing
 
-c2w :: Char -> Word
+c2w :: Char -> Word64
 c2w = fromIntegral . ord
 
 -- Precondition: the argument is less than 256
-unsafeW8 :: Word -> Word8
-unsafeW8 (W# w) = W8# w
+unsafeW8 :: Word64 -> Word8
+unsafeW8 (W64# w) = W8# (Exts.wordToWord8# (word64ToWord# w))
 
-unW8 :: Word8 -> Word#
+unW8 :: Word8 -> Word8#
 unW8 (W8# w) = w
-
-unW :: Word -> Word#
-unW (W# w) = w
 
 -- | Decode a base62-encoded 64-bit word. This rejects the empty
 -- string rather than decoding it as zero. This also rejects encoded
@@ -190,9 +190,9 @@ decode64 b@(Bytes _ _ len) = case len of
 -- Worker-wrapper will turn this into good code as long as
 -- we do not put a noinline pragma on it. It is recursive,
 -- so it cannot inline anywhere.
-decode64# :: Word -> Bytes -> (# (# #) | Word# #)
-decode64# !acc b@(Bytes arr off len) = case len of
-  0 -> (# | unW acc #)
+decode64# :: Word64 -> Bytes -> (# (# #) | Word64# #)
+decode64# !acc@(W64# acc# ) b@(Bytes arr off len) = case len of
+  0 -> (# | acc# #)
   _ -> case decodeByte (indexAsciiArray arr off) of
     Nothing -> (# (# #) | #)
     Just w ->
@@ -215,14 +215,14 @@ n62pow20 = Word128 0 n62pow10 * Word128 0 n62pow10
 -- position in the bytearray, @d@ tracks the number of digits
 -- consumed by this particular function. The caller should always
 -- set @d@ to 0.
-unsafeDecode62pow10# :: Word -> ByteArray -> Int -> Int -> (# (# #) | Word# #)
-unsafeDecode62pow10# !acc !arr !off !d = if d < 10
+unsafeDecode62pow10# :: Word64 -> ByteArray -> Int -> Int -> (# (# #) | Word64# #)
+unsafeDecode62pow10# !acc@(W64# acc# ) !arr !off !d = if d < 10
   then case decodeByte (indexAsciiArray arr off) of
     Nothing -> (# (# #) | #)
     Just w ->
       let acc' = acc * 62 + w
        in unsafeDecode62pow10# acc' arr (off + 1) (d + 1)
-  else (# | unW acc #)
+  else (# | acc# #)
 
 -- | Decode a base62-encoded 128-bit word. This rejects the empty
 -- string rather than decoding it as zero. This also rejects encoded
@@ -241,7 +241,7 @@ decode128 (Bytes (ByteArray arr) (I# off) (I# len)) =
     (# (# #) | #) -> Nothing
     (# | (# a, b #) #) -> Just (Word128 (W64# a) (W64# b))
 
-decode128# :: ByteArray# -> Int# -> Int# -> (# (# #) | (# Word#, Word# #) #)
+decode128# :: ByteArray# -> Int# -> Int# -> (# (# #) | (# Word64#, Word64# #) #)
 {-# noinline decode128# #-}
 decode128# arr off len
   | isTrue# (len ># 22# ) = (# (# #) | #) -- always overflows
@@ -269,15 +269,20 @@ decode128# arr off len
             Word128 (W64# x) (W64# y) -> (# | (# x, y #) #)
   | otherwise = case decode64# 0 (Bytes (ByteArray arr) (I# off) (I# len)) of
       (# (# #) | #) -> (# (# #) | #)
-      (# | w #) -> (# | (# 0##, w #) #)
+      (# | w #) -> (# | (# wordToWord64# 0##, w #) #)
 
 indexAsciiArray :: ByteArray -> Int -> Char
 indexAsciiArray (ByteArray arr) (I# i) = C# (indexCharArray# arr i)
 
-unsignedPushBase62 :: Word -> Word -> (Bool,Word)
-unsignedPushBase62 (W# a) (W# b) = 
-  let !(# ca, r0 #) = Exts.timesWord2# a 62##
-      !r1 = Exts.plusWord# r0 b
-      !cb = Exts.int2Word# (Exts.ltWord# r1 r0)
-      !c = ca `Exts.or#` cb
-   in (case c of { 0## -> False; _ -> True }, W# r1)
+unsignedPushBase62 :: Word64 -> Word64 -> (Bool,Word64)
+{-# inline unsignedPushBase62 #-}
+unsignedPushBase62 (W64# a) (W64# b) = 
+  let !(# ca, r0 #) = Exts.timesWord2# (word64ToWord# a) 62##
+   in case ca of
+        0## ->
+          let !r0' = wordToWord64# r0
+              !r1 = Exts.plusWord64# r0' b
+           in case Exts.ltWord64# r1 r0' of
+                1# -> (True,0)
+                _ -> (False,W64# r1)
+        _ -> (True,0)

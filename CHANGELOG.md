@@ -1,5 +1,9 @@
 # Revision history for base62
 
+## 0.1.0.3 -- 2023-07-25
+
+* Support GHC 9.4. Drop support for all versions of GHC before 9.4.
+
 ## 0.1.0.2 -- 2022-12-07
 
 * Support GHC 9.2.

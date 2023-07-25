@@ -1,4 +1,0 @@
-packages: .
-
-package base62
-  ghc-options: -Wall -Werror
