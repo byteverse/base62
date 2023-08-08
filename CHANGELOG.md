@@ -1,5 +1,11 @@
 # Revision history for base62
 
+## 0.1.1.0 -- 2023-08-08
+
+* Add `shortText128`.
+* Add `text128`.
+* Drop support for `text` earlier than 2.0.
+
 ## 0.1.0.3 -- 2023-07-25
 
 * Support GHC 9.4. Drop support for all versions of GHC before 9.4.

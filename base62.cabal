@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name: base62
-version: 0.1.0.3
+version: 0.1.1.0
 synopsis: Base62 encoding and decoding
 description:
   Encode and decode using the base62 encoding scheme.
@@ -19,10 +19,13 @@ library
     Data.Word.Base62
   build-depends:
     , base >=4.17 && <5
+    , bytebuild >=0.3.4 && <0.4
     , byteslice >=0.2 && <0.3
+    , bytestring >=0.11.4
     , natural-arithmetic >=0.1 && <0.2
     , primitive >=0.7 && <0.10
-    , bytebuild >=0.3.4 && <0.4
+    , text >=2.0.2
+    , text-short >=0.1.5
     , wide-word >=0.1.0.8 && <0.2
   hs-source-dirs: src
   default-language: Haskell2010

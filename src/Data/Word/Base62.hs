@@ -24,18 +24,23 @@ module Data.Word.Base62
   , decode64
     -- * 128-bit Word
   , encode128
+  , shortText128
+  , text128
   , builder128
   , decode128
   ) where
 
+import Data.ByteString.Short.Internal (ShortByteString(SBS))
 import Data.Bytes.Builder.Bounded.Unsafe (Builder(..))
 import Data.Bytes.Types (Bytes(Bytes))
 import Data.Char (ord)
 import Data.Primitive (ByteArray(..),readByteArray,writeByteArray)
 import Data.Primitive (MutableByteArray(MutableByteArray))
+import Data.Text (Text)
+import Data.Text.Short (ShortText)
 import Data.WideWord.Word128 (Word128(Word128))
-import GHC.Exts (Char(C#),Word64#,Word8#,quotRemWord#,indexCharArray#)
 import GHC.Exts (ByteArray#,Int#,Int(I#),(+#),(-#))
+import GHC.Exts (Char(C#),Word64#,Word8#,quotRemWord#,indexCharArray#)
 import GHC.Exts (isTrue#,(>#))
 import GHC.Exts (wordToWord64#,word64ToWord#)
 import GHC.ST (ST(ST))
@@ -45,6 +50,8 @@ import qualified Arithmetic.Nat as Nat
 import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Builder.Bounded as Builder
 import qualified GHC.Exts as Exts
+import qualified Data.Text.Short as TS
+import qualified Data.Text.Short.Unsafe as TS
 
 -- $setup
 -- >>> :set -XNumericUnderscores
@@ -71,7 +78,19 @@ builder64 (W64# w) = builder64# w
 -- >>> putStrLn (Bytes.toLatinString (Bytes.fromByteArray (encode128 octillion)))
 -- 1IdHllabYuAOlNK4
 encode128 :: Word128 -> ByteArray
+{-# inline encode128 #-}
 encode128 = Builder.run Nat.constant . builder128
+
+-- | Base62 encode a 128-bit word as @ShortText@.
+shortText128 :: Word128 -> ShortText
+{-# inline shortText128 #-}
+shortText128 !w = case encode128 w of
+  ByteArray x -> TS.fromShortByteStringUnsafe (SBS x)
+
+-- | Base62 encode a 128-bit word as @Text@.
+text128 :: Word128 -> Text
+{-# inline text128 #-}
+text128 = TS.toText . shortText128
 
 -- | Base62 encode a 128-bit word as a builder.
 builder128 :: Word128 -> Builder 22
