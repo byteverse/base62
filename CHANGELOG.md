@@ -1,5 +1,9 @@
 # Revision history for base62
 
+## 0.1.1.1 -- 2024-02-01
+
+* Update package metadata.
+
 ## 0.1.1.0 -- 2023-08-08
 
 * Add `shortText128`.
