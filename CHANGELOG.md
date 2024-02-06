@@ -1,5 +1,10 @@
 # Revision history for base62
 
+## 0.1.1.2 -- 2024-02-06
+
+* Restore import statement for `liftA2` to fix build for GHC 9.4.
+* Bump `text` upper bound to 2.2 to fix build for GHC 9.8.
+
 ## 0.1.1.1 -- 2024-02-01
 
 * Update package metadata.
