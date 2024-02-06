@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- liftA2 is needed by GHC 9.4
 import Control.Applicative (liftA2)
 import Data.Bits ((.&.))
 import Data.Char (chr)
